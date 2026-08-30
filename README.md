@@ -8,7 +8,7 @@
 
 ---
 
-## 👥 Team & Submission Details
+## Team & Submission Details
 
 * **Team Name**: DigitalTwin.ai
 * **Institution**: **Indian Institute of Technology Gandhinagar (IIT Gandhinagar)**
@@ -20,7 +20,7 @@
 
 ---
 
-## 📌 Executive Summary & Problem Vision
+## Executive Summary & Problem Vision
 
 Modern automotive assembly lines are complex multi-stage manufacturing systems featuring a patchwork of legacy equipment, modern IoT sensors, and manual assembly checkpoints. A defect introduced at an early station (e.g., body preparation $S_1$ or underbody assembly $S_2$) often remains undetected until final inspection ($S_{10}$), causing:
 1. **Cascading Downstream Damage**: Faulty assembly damages downstream tools and components.
@@ -37,7 +37,7 @@ Unlike conventional snapshot-based machine learning models that process each sta
 
 ---
 
-## 🏭 Real-World Operational Complexities Addressed
+## Real-World Operational Complexities Addressed
 
 Our solution specifically addresses the core real-world constraints outlined in the challenge statement:
 
@@ -51,7 +51,7 @@ Our solution specifically addresses the core real-world constraints outlined in 
 
 ---
 
-## 📐 System Architecture & Neural Topology
+## System Architecture & Neural Topology
 
 ```
              VEHICLE TELEMETRY SEQUENCE (S1 -> S10)
@@ -88,7 +88,7 @@ Our solution specifically addresses the core real-world constraints outlined in 
 
 ---
 
-## 📊 Benchmark & Evaluation Strategy
+## Benchmark & Evaluation Strategy
 
 To validate model robustness across realistic factory conditions, we benchmarked our solution across **5 synthetic dataset variants** using vehicle-level stratified cross-validation in `model_comparison_template.ipynb`:
 
@@ -117,7 +117,7 @@ To validate model robustness across realistic factory conditions, we benchmarked
 
 ---
 
-## 🎯 Multi-Stakeholder Persona Dashboards
+## Multi-Stakeholder Persona Dashboards
 
 Our digital twin architecture serves three distinct operational personas from a single underlying inference engine:
 
@@ -153,7 +153,7 @@ Our digital twin architecture serves three distinct operational personas from a 
 
 ---
 
-## 📁 Repository Structure
+## Repository Structure
 
 ```
 digitaltwin/
@@ -181,7 +181,7 @@ digitaltwin/
 
 ---
 
-## ⚙️ Data Schema Specification (24 Columns)
+## Data Schema Specification (24 Columns)
 
 The dataset captures 10 sequential stations for 10,000 vehicles ($100,000$ total records):
 
@@ -214,7 +214,7 @@ The dataset captures 10 sequential stations for 10,000 vehicles ($100,000$ total
 
 ---
 
-## 🚀 Execution & Quick Start Guide
+## Execution & Quick Start Guide
 
 ### 1. Installation
 Clone the repository and install required packages:
@@ -251,7 +251,7 @@ Click **"Run All"** to execute cross-validation, evaluate LightGBM vs. LSTM acro
 
 ---
 
-## 🔮 Scalability & Future Roadmap
+## Scalability & Future Roadmap
 
 1. **Edge Deployment via ONNX Runtime**: Quantize PyTorch LSTM weights to INT8 and deploy on edge gateways at each assembly station for sub-10ms inference latency.
 2. **Transfer Learning for New Plant Layouts**: Fine-tune pre-trained station embeddings when deploying to assembly lines with different station counts (e.g. 30 to 50 stations).
@@ -259,7 +259,7 @@ Click **"Run All"** to execute cross-validation, evaluate LightGBM vs. LSTM acro
 
 ---
 
-## 🎓 Academic Credit & Contact
+## Academic Credit & Contact
 
 Developed for **Problem Track 4 (DigitalTwin.ai)** by:
 
