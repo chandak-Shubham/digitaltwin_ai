@@ -227,6 +227,6 @@ Click **"Run All"** to execute cross-validation, evaluate LightGBM vs. LSTM acro
 
 ## Developed for **Problem Track 4 (DigitalTwin.ai)** by:
 
-* **Pratham Choksi** — Indian Institute of Technology Gandhinagar (IIT Gandhinagar)
-* **Vansh Barfiwala** — Indian Institute of Technology Gandhinagar (IIT Gandhinagar)
-* **Shubham Chandak** — Indian Institute of Technology Gandhinagar (IIT Gandhinagar)
+* **Pratham Choksi** — IIT Gandhinagar, B.Tech in Computer Science Engineering
+* **Vansh Barfiwala** — IIT Gandhinagar, B.Tech in Computer Science Engineering
+* **Shubham Chandak** — IIT Gandhinagar, B.Tech in Mechanical Engineering
