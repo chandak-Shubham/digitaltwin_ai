@@ -2,9 +2,6 @@
 
 [![Track](https://img.shields.io/badge/Hackathon-Problem%20Track%204%3A%20DigitalTwin.ai-purple.svg)]()
 [![Institution](https://img.shields.io/badge/Institution-IIT%20Gandhinagar-blue.svg)]()
-[![Python](https://img.shields.io/badge/Python-3.11+-green.svg)]()
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.5.1-red.svg)]()
-[![LightGBM](https://img.shields.io/badge/LightGBM-4.5.0-orange.svg)]()
 
 ---
 
