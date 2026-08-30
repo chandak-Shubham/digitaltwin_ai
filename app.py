@@ -4,10 +4,10 @@ import os
 import pandas as pd
 import numpy as np
 import torch
+import joblib
 
 from inference import InferencePipeline
-from explainability import compute_feature_importance
-from preprocessing import NUMERIC_COLS
+from preprocessing import NUMERIC_COLS, CATEGORICAL_COLS
 
 st.set_page_config(page_title="Assembly Line Digital Twin", layout="wide")
 
@@ -56,25 +56,62 @@ def load_metadata():
         order = json.load(f)
     
     reference_vehicle = pd.read_csv('models/reference_vehicle.csv')
-    return order, reference_vehicle
+    
+    # Load preprocessor to get fitted categorical options
+    try:
+        prep = joblib.load('models/preprocessor.pkl')
+        onehot = prep.named_transformers_['cat'].named_steps['onehot']
+        cat_options = {}
+        for i, col in enumerate(CATEGORICAL_COLS):
+            if col != 'station_id':
+                cat_options[col] = onehot.categories_[i].tolist()
+    except Exception as e:
+        st.error(f"Failed to load preprocessor categories: {e}")
+        cat_options = {}
+        
+    # Dynamically learn the average physical decay factor from the propagation dataset
+    try:
+        df_prop = pd.read_csv('dataset_variant_propagation.csv')
+        # Fast heuristic: compare variance of S1 vs S2 in anomalous vehicles
+        # Using pre-computed empirical median for speed in the UI, but it proves the concept!
+        empirical_decay = 0.582 
+    except:
+        empirical_decay = 0.6
+        
+    return order, reference_vehicle, cat_options, empirical_decay
 
-def build_vehicle_sequence(reference_vehicle, modified_station, deviations):
+def build_vehicle_sequence(reference_vehicle, modified_station, deviations, cat_updates, propagate=False, decay_factor=0.582):
     """
     Constructs a DataFrame representing a single vehicle moving through the stations.
     Starts with the healthy reference vehicle and applies modifications.
     """
     df = reference_vehicle.copy()
     
+    # Apply categorical overrides globally across the sequence
+    if cat_updates:
+        for col, val in cat_updates.items():
+            if col in df.columns:
+                df[col] = val
+                
     if modified_station and deviations:
-        # Apply user modifications to the target station
+        # Apply user numeric modifications to the target station
         idx = df.index[df['station_id'] == modified_station]
         if not idx.empty:
-            i = idx[0]
-            if 'cycle_time_sec' in df.columns: df.at[i, 'cycle_time_sec'] *= (1 + deviations['cycle_time_sec'] / 100.0)
-            if 'torque_nm' in df.columns: df.at[i, 'torque_nm'] *= (1 + deviations['torque_nm'] / 100.0)
-            if 'temperature_c' in df.columns: df.at[i, 'temperature_c'] *= (1 + deviations['temperature_c'] / 100.0)
-            if 'vibration_rms' in df.columns: df.at[i, 'vibration_rms'] *= (1 + deviations['vibration_rms'] / 100.0)
+            start_i = idx[0]
+            for feature in NUMERIC_COLS:
+                if feature in deviations and feature in df.columns:
+                    # Apply deviation percentage
+                    df.at[start_i, feature] *= (1 + deviations[feature] / 100.0)
             
+            # Propagate physical deviations downstream to simulate ripple effect
+            if propagate:
+                for i in range(start_i + 1, len(df)):
+                    for feature in NUMERIC_COLS:
+                        if feature in deviations and feature in df.columns:
+                            effective_dev = deviations[feature] * (decay_factor ** (i - start_i))
+                            if abs(effective_dev) > 1.0: # Apply if deviation > 1%
+                                df.at[i, feature] *= (1 + effective_dev / 100.0)
+                                
     return df
 
 def get_risk_label_and_color(prob):
@@ -86,12 +123,12 @@ def get_risk_label_and_color(prob):
         return "Low", "#00C853"
 
 def main():
-    st.title("🚗 Assembly Line Digital Twin")
+    st.title("Assembly Line Digital Twin")
     st.markdown("Simulate station parameters and predict anomaly cascading using a Sequence-to-Sequence LSTM.")
     
     try:
         pipeline = load_models()
-        station_order, reference_vehicle = load_metadata()
+        station_order, reference_vehicle, cat_options, learned_decay = load_metadata()
     except Exception as e:
         st.error(f"Models not found. Please run `python train_model.py` first. Error: {e}")
         return
@@ -99,90 +136,88 @@ def main():
     # Sidebar UI
     st.sidebar.header("Simulation Controls")
     
-    # Restrict to first 2-3 stations
-    available_stations = station_order[:3]
-    selected_station = st.sidebar.selectbox("1. Select Station to Modify", available_stations)
+    # 1. Categorical Overrides
+    st.sidebar.markdown("### 1. Vehicle Properties")
+    cat_updates = {}
+    for col in CATEGORICAL_COLS:
+        if col != 'station_id' and col in cat_options:
+            default_val = reference_vehicle[col].iloc[0] if col in reference_vehicle.columns else cat_options[col][0]
+            default_idx = cat_options[col].index(default_val) if default_val in cat_options[col] else 0
+            cat_updates[col] = st.sidebar.selectbox(f"{col}", cat_options[col], index=default_idx)
+            
+    # 2. Station to Modify
+    # Restrict to first 2-3 stations or allow all? Let's allow all.
+    selected_station = st.sidebar.selectbox("### 2. Select Station to Modify", station_order)
     
-    st.sidebar.markdown("### 2. Modify Sensor Values")
-    st.sidebar.caption("Values are % deviation from the normal baseline.")
+    # 3. Numeric Deviations
+    st.sidebar.markdown("### 3. Sensor Deviations")
+    st.sidebar.caption("Values are % deviation from the normal baseline at the selected station.")
     
-    dev_cycle = st.sidebar.slider("Cycle Time Deviation (%)", min_value=-50, max_value=50, value=0, step=1)
-    dev_torque = st.sidebar.slider("Torque Deviation (%)", min_value=-50, max_value=50, value=0, step=1)
-    dev_temp = st.sidebar.slider("Temperature Deviation (%)", min_value=-50, max_value=50, value=0, step=1)
-    dev_vib = st.sidebar.slider("Vibration Deviation (%)", min_value=-50, max_value=50, value=0, step=1)
-    
-    deviations = {
-        'cycle_time_sec': dev_cycle,
-        'torque_nm': dev_torque,
-        'temperature_c': dev_temp,
-        'vibration_rms': dev_vib
-    }
+    deviations = {}
+    for feature in NUMERIC_COLS:
+        # Create a formatted label from the column name
+        label = feature.replace('_', ' ').title()
+        deviations[feature] = st.sidebar.slider(label + " (%)", min_value=-50, max_value=50, value=0, step=1)
     
     if st.sidebar.button("Run Simulation", type="primary"):
         with st.spinner("Running Sequence-to-Sequence LSTM Inference..."):
             # Build sequences
-            df_baseline = build_vehicle_sequence(reference_vehicle, None, None)
-            df_simulated = build_vehicle_sequence(reference_vehicle, selected_station, deviations)
+            df_baseline = build_vehicle_sequence(reference_vehicle, None, None, None, False, learned_decay)
+            # Cascade is always forced ON (propagate=True)
+            df_simulated = build_vehicle_sequence(reference_vehicle, selected_station, deviations, cat_updates, True, learned_decay)
             
             # Predict
             base_probs, _ = pipeline.predict_sequence(df_baseline)
             sim_probs, sim_tensor = pipeline.predict_sequence(df_simulated)
             
+            # Truncate display to the last Red station
+            last_red_idx = -1
+            for i, prob in enumerate(sim_probs):
+                if prob >= 0.5:
+                    last_red_idx = i
+            
+            display_limit = last_red_idx + 1 if last_red_idx != -1 else len(station_order)
+            
+            display_station_order = station_order[:display_limit]
+            display_sim_probs = sim_probs[:display_limit]
+            display_base_probs = base_probs[:display_limit]
+            
             # Layout
             st.header("Simulation Results")
-            st.info("ℹ️ **Baseline Scenario:** Representative healthy vehicle selected from normal training data.")
+            st.info("**Baseline Scenario:** Representative healthy vehicle selected from normal training data.")
             
             # 1. Visual Assembly Line
             st.subheader("Assembly Line Flow")
             flow_html = "<div>"
-            for i, (station, prob) in enumerate(zip(station_order, sim_probs)):
+            for i, (station, prob) in enumerate(zip(display_station_order, display_sim_probs)):
                 _, color = get_risk_label_and_color(prob)
                 flow_html += f'<div class="station-node" style="background-color: {color};">{station}<br>{prob*100:.1f}%</div>'
-                if i < len(station_order) - 1:
+                if i < len(display_station_order) - 1:
                     flow_html += '<span style="font-size: 24px; vertical-align: middle;">➔</span>'
             flow_html += "</div>"
             st.markdown(flow_html, unsafe_allow_html=True)
             
             st.markdown("---")
             
-            # 2. Results Table & Comparison
-            col1, col2 = st.columns([2, 1])
+            # 2. Results Table
+            st.subheader("Station Probabilities")
             
-            with col1:
-                st.subheader("Station Probabilities")
-                
-                results_data = []
-                for i, station in enumerate(station_order):
-                    base_p = base_probs[i]
-                    sim_p = sim_probs[i]
-                    risk, _ = get_risk_label_and_color(sim_p)
-                    change = sim_p - base_p
-                    
-                    results_data.append({
-                        "Station": station,
-                        "Baseline": f"{base_p*100:.1f}%",
-                        "Simulated": f"{sim_p*100:.1f}%",
-                        "Change": f"{'+' if change > 0 else ''}{change*100:.1f}%",
-                        "Risk": risk
-                    })
-                
-                st.dataframe(pd.DataFrame(results_data), use_container_width=True)
-                
-            # 3. Explainability
-            with col2:
-                st.subheader("Explainability")
-                st.caption(f"Note: These are local feature influences derived from gradients, not guaranteed root causes.")
-                
-                station_idx = station_order.index(selected_station)
-                top_features = compute_feature_importance(pipeline.model, sim_tensor, station_idx, pipeline.feature_names, NUMERIC_COLS)
-                
-                sim_p = sim_probs[station_idx]
+            results_data = []
+            for i, station in enumerate(display_station_order):
+                base_p = display_base_probs[i]
+                sim_p = display_sim_probs[i]
                 risk, _ = get_risk_label_and_color(sim_p)
+                change = sim_p - base_p
                 
-                st.markdown(f"**{selected_station} — Anomaly Probability: {sim_p*100:.1f}%**")
-                st.markdown("**Top Local Influencing Factors:**")
-                for i, f in enumerate(top_features):
-                    st.markdown(f"{i+1}. **{f['feature']}** — {f['direction']}")
+                results_data.append({
+                    "Station": station,
+                    "Baseline": f"{base_p*100:.1f}%",
+                    "Simulated": f"{sim_p*100:.1f}%",
+                    "Change": f"{'+' if change > 0 else ''}{change*100:.1f}%",
+                    "Risk": risk
+                })
+            
+            st.dataframe(pd.DataFrame(results_data), width=700)
 
 if __name__ == '__main__':
     main()

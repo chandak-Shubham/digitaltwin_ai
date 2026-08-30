@@ -18,14 +18,15 @@ def compute_feature_importance(model, X_tensor, station_index, feature_names, nu
         # Forward pass
         out = model(X_tensor) # shape: [1, seq_len]
         
-        # Get the prediction for the target station
-        prob = torch.sigmoid(out[0, station_index])
+        # Get the logit (raw score) and probability for the target station
+        logit = out[0, station_index]
+        prob = torch.sigmoid(logit)
         
         # Zero gradients just in case
         model.zero_grad()
         
-        # Backward pass to compute gradients of the probability w.r.t inputs
-        prob.backward()
+        # Backward pass on the LOGIT (prevents vanishing gradients when prob is 100%)
+        logit.backward()
     
     # Gradients for the specific station's features
     grads = X_tensor.grad[0, station_index].cpu().numpy()
@@ -38,17 +39,13 @@ def compute_feature_importance(model, X_tensor, station_index, feature_names, nu
             grad_val = float(grads[i])
             abs_importance = abs(grad_val)
             
-            # Determine direction text based on gradient sign and magnitude
-            if abs_importance < 0.001:
+            # Determine direction text based on gradient sign
+            if abs_importance < 1e-7:
                 direction = "negligible influence"
-            elif grad_val > 0.05:
-                direction = "strongly increased prediction"
-            elif grad_val > 0.0:
-                direction = "increased prediction"
-            elif grad_val < -0.05:
-                direction = "strongly decreased prediction"
+            elif grad_val > 0:
+                direction = "increased anomaly risk"
             else:
-                direction = "decreased prediction"
+                direction = "decreased anomaly risk"
                 
             feature_influences.append({
                 'feature': name, 
