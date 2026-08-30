@@ -152,26 +152,15 @@ Our digital twin architecture serves three distinct operational personas from a 
 
 ```
 digitaltwin/
-├── README.md                          # Comprehensive project documentation & submission report
-├── requirements.txt                   # Dependency manifest (torch, lightgbm, scikit-learn, etc.)
-├── model_comparison_template.ipynb    # Benchmark notebook (LightGBM vs. LSTM across 5 datasets)
-├── model_comparison_results.csv       # Formatted benchmark metrics summary
-├── dataset.csv                        # Base telemetry dataset (100,000 rows / 10,000 vehicles)
-├── dataset_variant_sparse.csv         # Sparse variant (missing data simulation)
-├── dataset_variant_drift.csv          # Drift variant (sensor calibration drift)
-├── dataset_variant_propagation.csv    # Defect propagation variant
-├── dataset_variant_noisy.csv          # Noisy telemetry variant
-├── checkpoints/                       # Saved PyTorch model checkpoints (.pt)
-│   └── best_lstm_model.pt             # Trained model state dict
-└── src/                               # Core Python source codebase
-    ├── __init__.py
-    ├── data_loader.py                 # Data splitting, sequence construction & PyTorch DataLoader
-    ├── train.py                       # Model training pipeline & multi-task loss optimizer
-    ├── evaluate.py                    # Evaluation metrics, confusion matrix & ROC-AUC curves
-    ├── predict.py                     # Real-time vehicle sequence inference simulator
-    └── models/
-        ├── __init__.py
-        └── lstm_model.py              # SequentialAssemblyRNN architecture & FocalLoss
+├── README.md                          
+├── dataset.csv                        
+├── dataset_variant_base.csv           
+├── dataset_variant_drift.csv          
+├── dataset_variant_noisy.csv          
+├── dataset_variant_propagation.csv    
+├── dataset_variant_sparse.csv         
+├── model_comparison_results.csv       
+└── model_comparison_template.ipynb    
 ```
 
 ---
@@ -216,28 +205,10 @@ Clone the repository and install required packages:
 ```bash
 git clone https://github.com/chandak-Shubham/digitaltwin_hackathon.git
 cd digitaltwin_hackathon
-pip install -r requirements.txt
+pip install torch lightgbm scikit-learn pandas numpy
 ```
 
-### 2. Model Training
-Train the `SequentialAssemblyRNN` PyTorch model on `dataset.csv`:
-```bash
-python src/train.py --data_path dataset.csv --epochs 15 --batch_size 32 --lr 0.001
-```
-
-### 3. Model Evaluation
-Evaluate a trained model checkpoint against the test split:
-```bash
-python src/evaluate.py --data_path dataset.csv --checkpoint checkpoints/best_lstm_model.pt
-```
-
-### 4. Real-Time Vehicle Inference Simulation
-Simulate step-by-step real-time monitoring for a specific vehicle (`VEH-00001`):
-```bash
-python src/predict.py --vehicle_id VEH-00001 --data_path dataset.csv
-```
-
-### 5. Running the Model Benchmark Notebook
+### 2. Running the Model Benchmark Notebook
 Open `model_comparison_template.ipynb` in VS Code or Jupyter Notebook:
 ```bash
 jupyter notebook model_comparison_template.ipynb
@@ -259,5 +230,7 @@ Click **"Run All"** to execute cross-validation, evaluate LightGBM vs. LSTM acro
 Developed for **Problem Track 4 (DigitalTwin.ai)** by:
 
 * **Pratham Choksi** — Indian Institute of Technology Gandhinagar (IIT Gandhinagar)
+* **Vansh Barfiwala** — Indian Institute of Technology Gandhinagar (IIT Gandhinagar)
+* **Shubham Chandak** — Indian Institute of Technology Gandhinagar (IIT Gandhinagar)itute of Technology Gandhinagar (IIT Gandhinagar)
 * **Vansh Barfiwala** — Indian Institute of Technology Gandhinagar (IIT Gandhinagar)
 * **Shubham Chandak** — Indian Institute of Technology Gandhinagar (IIT Gandhinagar)
