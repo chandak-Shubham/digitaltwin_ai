@@ -1,0 +1,11 @@
+dataset,model,cv_auc,best_params,accuracy,precision,recall,f1,roc_auc
+base,lightgbm,1.0,"{'learning_rate': 0.03, 'n_estimators': 300, 'num_leaves': 15}",1.0,1.0,1.0,1.0,0.9999999999999998
+base,lstm,1.0,"{'batch': 32, 'dropout': 0.2, 'epochs': 8, 'hidden': 64, 'layers': 2, 'lr': 0.001}",1.0,1.0,1.0,1.0,1.0
+sparse,lightgbm,0.9983456090387007,"{'learning_rate': 0.08, 'n_estimators': 150, 'num_leaves': 31}",0.998,1.0,0.96875,0.9841269841269841,0.9960269764957265
+sparse,lstm,0.9986266867782602,"{'batch': 32, 'dropout': 0.2, 'epochs': 8, 'hidden': 64, 'layers': 2, 'lr': 0.001}",1.0,1.0,1.0,1.0,1.0
+drift,lightgbm,0.9999828125662029,"{'learning_rate': 0.08, 'n_estimators': 150, 'num_leaves': 15}",0.9995,1.0,0.9921875,0.996078431372549,1.0
+drift,lstm,1.0,"{'batch': 32, 'dropout': 0.2, 'epochs': 8, 'hidden': 64, 'layers': 2, 'lr': 0.001}",1.0,1.0,1.0,1.0,1.0
+propagation,lightgbm,0.9998773516140768,"{'learning_rate': 0.03, 'n_estimators': 150, 'num_leaves': 31}",0.999,0.9846153846153847,1.0,0.9922480620155039,0.9999916533119658
+propagation,lstm,1.0,"{'batch': 32, 'dropout': 0.2, 'epochs': 8, 'hidden': 128, 'layers': 2, 'lr': 0.001}",1.0,1.0,1.0,1.0,1.0
+noisy,lightgbm,0.9999453751942052,"{'learning_rate': 0.08, 'n_estimators': 150, 'num_leaves': 31}",0.999,1.0,0.984375,0.9921259842519685,0.9999874799679487
+noisy,lstm,1.0,"{'batch': 32, 'dropout': 0.2, 'epochs': 8, 'hidden': 128, 'layers': 2, 'lr': 0.001}",1.0,1.0,1.0,1.0,1.0
