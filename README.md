@@ -89,7 +89,7 @@ Our solution specifically addresses the core real-world constraints outlined in 
 
 To validate model robustness across realistic factory conditions, we benchmarked our solution across **5 synthetic dataset variants** using vehicle-level stratified cross-validation in `model_comparison_template.ipynb`:
 
-1. **`dataset.csv` (Base)**: 100,000 telemetry rows (10,000 vehicles $\times$ 10 stations).
+1. **`dataset_variant_base.csv` (Base)**: 100,000 telemetry rows (10,000 vehicles $\times$ 10 stations).
 2. **`dataset_variant_sparse.csv` (Sparse)**: Simulates 30% missing data / uninstrumented stations.
 3. **`dataset_variant_drift.csv` (Drift)**: Simulates calibration drift in torque/temperature sensors over time.
 4. **`dataset_variant_propagation.csv` (Propagation)**: Simulates cascading upstream-to-downstream defect propagation.
